@@ -101,6 +101,8 @@ void ConnectionController::connectToLocation(const QString &locationId,
     m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns);
 #elif defined(Q_OS_MACOS)
     // TODO: реальний macOS-тунель (System Extension) — окремий етап
+    // qDebug() <<
+    m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns);
     QTimer::singleShot(1500, this, [this] {
         updateIpAndCountry();
         ping();
@@ -252,13 +254,13 @@ void ConnectionController::checkInternet() {
 }
 
 void ConnectionController::stopTunnel() {
-#ifdef Q_OS_IOS
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   m_tunnel->stop();
 #endif
 }
 
 void ConnectionController::refreshStatus() {
-#ifdef Q_OS_IOS
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   m_tunnel->refreshStatus();
 #endif
 }

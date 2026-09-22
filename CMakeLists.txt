@@ -124,14 +124,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 )
 
 if(APPLE)
-    # iOS + macOS: власний Keychain з shared access group (для extension)
     target_sources(${PROJECT_NAME} PRIVATE
         source/KeychainStore.h
         ios/KeychainStore_apple.mm
     )
     target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Security")
 else()
-    # TODO: qtkeychain для Android/Windows/Linux, коли дійде черга
     target_sources(${PROJECT_NAME} PRIVATE
         source/KeychainStore.h
         source/KeychainStore_stub.cpp
@@ -149,133 +147,95 @@ if(IOS)
     target_sources(${PROJECT_NAME} PRIVATE "${STORYBOARD_FILE}" "${ASSETS_FOLDER}")
 
     target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/ios"
-    )
+        "${CMAKE_CURRENT_SOURCE_DIR}/ios")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    MACOSX_BUNDLE TRUE
-    MACOSX_BUNDLE_GUI_IDENTIFIER              "com.rodon.vpn.app"
-    MACOSX_BUNDLE_BUNDLE_NAME                 "RodON"
-    MACOSX_BUNDLE_BUNDLE_VERSION              "${PROJECT_VERSION}"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING        "${PROJECT_VERSION_SHORT}"
-    MACOSX_BUNDLE_INFO_PLIST                  "${CMAKE_CURRENT_SOURCE_DIR}/ios/Info.plist"
-    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app"
-    # "com.rodon.vpnapp"
-    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM          "H8GLL2MY9E"
-    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY        "iPhone Developer"
-    XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY    "1"
-    XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
-    XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME          "AppIcon"
-    XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS YES
-    XCODE_ATTRIBUTE_UILaunchStoryboardName    "Storyboard"
-    XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName "RodON"
-    XCODE_ATTRIBUTE_MARKETING_VERSION         "${PROJECT_VERSION}"
-    XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION   "${PROJECT_VERSION}"
-    XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.productivity"
-    # XCODE_EMBED_APP_EXTENSIONS "RodonTunnel"
-    # XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY "YES"
-    XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-    "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon.entitlements"
-)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_GUI_IDENTIFIER              "com.rodon.vpn.app"
+        MACOSX_BUNDLE_BUNDLE_NAME                 "RodON"
+        MACOSX_BUNDLE_BUNDLE_VERSION              "${PROJECT_VERSION}"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING        "${PROJECT_VERSION_SHORT}"
+        MACOSX_BUNDLE_INFO_PLIST                  "${CMAKE_CURRENT_SOURCE_DIR}/ios/Info.plist"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app"
+        XCODE_ATTRIBUTE_DEVELOPMENT_TEAM          "H8GLL2MY9E"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE           "Automatic"
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY    "1"
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+        XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS YES
+        XCODE_ATTRIBUTE_UILaunchStoryboardName    "Storyboard"
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_CFBundleDisplayName "RodON"
+        XCODE_ATTRIBUTE_MARKETING_VERSION         "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION   "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_LSApplicationCategoryType "public.app-category.productivity"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS    "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon.entitlements")
+endif()
 
 set(WGK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ios/wireguardkit")
-file(GLOB WGK_C "${WGK_DIR}/WireGuardKitC/*.c")
-message(STATUS "WGK_C files: ${WGK_C}")
-    # --- iOS VPN Extension (WireGuard) ---
+file(GLOB WGK_SWIFT   "${WGK_DIR}/WireGuardKit/*.swift")
+file(GLOB WGK_C       "${WGK_DIR}/WireGuardKitC/*.c")
+file(GLOB TUNNEL_SWIFT "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/*.swift")
+
 if(IOS)
-    set(WGK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ios/wireguardkit")
-
-    file(GLOB WGK_SWIFT "${WGK_DIR}/WireGuardKit/*.swift")
-    file(GLOB WGK_C     "${WGK_DIR}/WireGuardKitC/*.c")
-    file(GLOB TUNNEL_SWIFT "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/*.swift")
-
-    add_executable(RodonTunnel
-        ${TUNNEL_SWIFT}
-        ${WGK_SWIFT}
-    )
+    add_executable(RodonTunnel ${TUNNEL_SWIFT} ${WGK_SWIFT})
     target_sources(RodonTunnel PRIVATE ${WGK_C})
     set_source_files_properties(${WGK_C} PROPERTIES LANGUAGE C)
 
+    set_target_properties(RodonTunnel PROPERTIES
+        MACOSX_BUNDLE TRUE
+        XCODE_PRODUCT_TYPE "com.apple.product-type.app-extension"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app.tunnel"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info.plist"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodonTunnel.entitlements"
+        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1"
+        XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
+        XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "H8GLL2MY9E"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
+        XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+        XCODE_ATTRIBUTE_SWIFT_ENABLE_EXPLICIT_MODULES "NO"
+        XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/RodonTunnel-Bridging-Header.h"
+        XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}\" \"${WGK_DIR}/WireGuardKitC\"")
 
-set_target_properties(RodonTunnel PROPERTIES
-    MACOSX_BUNDLE TRUE
-    XCODE_PRODUCT_TYPE "com.apple.product-type.app-extension"
-    XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app.tunnel"
-    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info.plist"
-    XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodonTunnel.entitlements"
-    XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
-    XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1"
-    XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
-    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "H8GLL2MY9E"
-    XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
-    XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
-    XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
-    # Критично — rpath для Swift-рантайму (цього бракувало):
-    XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
-    # C-модуль WireGuardKitC для Swift:
-    XCODE_ATTRIBUTE_SWIFT_INCLUDE_PATHS "$(inherited) \"${WGK_DIR}/WireGuardKitC\""
-    XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}/WireGuardKitC\""
-    XCODE_ATTRIBUTE_SWIFT_ENABLE_EXPLICIT_MODULES "NO"
-    XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/RodonTunnel-Bridging-Header.h"
-    XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}\" \"${WGK_DIR}/WireGuardKitC\""
-)
+    target_link_libraries(RodonTunnel PRIVATE
+        "${WGK_DIR}/libwg-go.a"
+        "-framework NetworkExtension" "-framework Foundation" "-framework UIKit")
 
-target_link_libraries(RodonTunnel PRIVATE
-    "${WGK_DIR}/libwg-go.a"
-    "-framework NetworkExtension"
-    "-framework Foundation"
-    "-framework UIKit"
-)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        XCODE_EMBED_APP_EXTENSIONS RodonTunnel
+        XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY YES)
 
-# Вбудувати extension у основний апк
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    XCODE_EMBED_APP_EXTENSIONS RodonTunnel
-    XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY YES
-)
-endif()
+elseif(APPLE)
+    add_executable(RodonTunnel ${TUNNEL_SWIFT} ${WGK_SWIFT})
+    target_sources(RodonTunnel PRIVATE ${WGK_C})
+    set_source_files_properties(${WGK_C} PROPERTIES LANGUAGE C)
 
-# --- WireGuardKit vendored sources ---
-# set(WGK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ios/wireguardkit")
-# file(GLOB WGK_SWIFT "${WGK_DIR}/WireGuardKit/*.swift")
-# file(GLOB WGK_C     "${WGK_DIR}/WireGuardKitC/*.c")
+    set_target_properties(RodonTunnel PROPERTIES
+        MACOSX_BUNDLE TRUE
+        XCODE_PRODUCT_TYPE "com.apple.product-type.app-extension"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app.tunnel"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info-macos.plist"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodonTunnel-macos.entitlements"
+        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
+        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "12.0"
+        XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "H8GLL2MY9E"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
+        XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
+        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
+        XCODE_ATTRIBUTE_SWIFT_ENABLE_EXPLICIT_MODULES "NO"
+        XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/RodonTunnel-Bridging-Header.h"
+        XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}\" \"${WGK_DIR}/WireGuardKitC\"")
 
-# file(GLOB TUNNEL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/*.swift")
+    target_link_libraries(RodonTunnel PRIVATE
+        "${WGK_DIR}/libwg-go-macos.a"
+        "-framework NetworkExtension" "-framework Foundation")
 
-# add_executable(RodonTunnel MACOSX_BUNDLE
-#     ${TUNNEL_SOURCES}
-#     ${WGK_SWIFT}
-#     ${WGK_C}
-# )
-
-# set_target_properties(RodonTunnel PROPERTIES
-#     BUNDLE TRUE
-#     BUNDLE_EXTENSION "appex"
-#     XCODE_PRODUCT_TYPE "com.apple.product-type.app-extension"
-#     XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app.tunnel"
-#     MACOSX_BUNDLE_GUI_IDENTIFIER "com.rodon.vpn.app.tunnel"
-#     MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info.plist"
-#     XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET "15.0"
-#     XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
-#     XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-#     "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodonTunnel.entitlements"
-#     XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "H8GLL2MY9E"
-#     XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
-#     XCODE_ATTRIBUTE_SWIFT_INCLUDE_PATHS "${WGK_DIR}/WireGuardKitC"
-#     XCODE_ATTRIBUTE_OTHER_SWIFT_FLAGS "-I${WGK_DIR}/WireGuardKitC"
-#     XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING "NO"
-#     XCODE_ATTRIBUTE_ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES "YES"
-# )
-
-# target_include_directories(RodonTunnel PRIVATE
-#     "${WGK_DIR}/WireGuardKitC"
-# )
-
-# target_link_libraries(RodonTunnel PRIVATE
-#     "${WGK_DIR}/libwg-go.a"
-#     "-framework NetworkExtension"
-#     "-framework Foundation"
-#     "-framework UIKit"
-# )
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        XCODE_EMBED_APP_EXTENSIONS RodonTunnel
+        XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY YES)
 endif()
 
 if(APPLE AND NOT IOS)
@@ -285,11 +245,15 @@ if(APPLE AND NOT IOS)
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
-        WIN32_EXECUTABLE TRUE
-        MACOSX_BUNDLE_GUI_IDENTIFIER       "com.rodon.vpnapp"
+        MACOSX_BUNDLE_GUI_IDENTIFIER       "com.rodon.vpn.app"
         MACOSX_BUNDLE_BUNDLE_VERSION       "${PROJECT_VERSION}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_SHORT}"
         MACOSX_BUNDLE_ICON_FILE            "rodon.icns"
+        XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app"
+        XCODE_ATTRIBUTE_DEVELOPMENT_TEAM   "H8GLL2MY9E"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE    "Automatic"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
+            "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
     )
 endif()
 

@@ -473,6 +473,7 @@ Item {
                                                         default: return qsTr("Disconnecting.  ")
                                                         }
                                                 }
+                                                default: return""
                                                 }
                                         }
 
@@ -783,7 +784,7 @@ Item {
                                 Layout.preferredHeight: paintedHeight
                                 Layout.alignment: Qt.AlignVCenter
                                 text: rodon?.isFreeVersion ? qsTr("Press here if you want to upgrade to full version")
-                                                           : qsTr("Full version active until %1").arg(expiryDate)
+                                                           : qsTr("Full version active until %1").arg("expiryDate")
 
                                 color: Colors.white
                                 font.pixelSize: 12
