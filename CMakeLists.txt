@@ -95,7 +95,7 @@ if(APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/ios/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/ios/*.mm"
     )
-    list(APPEND CPP_H_FILES ${IOS_H_FILES})
+list(APPEND CPP_H_FILES ${IOS_H_FILES})
 endif()
 
 # translation files
@@ -128,7 +128,7 @@ if(APPLE)
         source/KeychainStore.h
         ios/KeychainStore_apple.mm
     )
-    target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Security")
+target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Security")
 else()
     target_sources(${PROJECT_NAME} PRIVATE
         source/KeychainStore.h
@@ -253,7 +253,7 @@ if(APPLE AND NOT IOS)
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM   "H8GLL2MY9E"
         XCODE_ATTRIBUTE_CODE_SIGN_STYLE    "Automatic"
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-            "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
+        "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
     )
 endif()
 

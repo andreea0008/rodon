@@ -10,11 +10,11 @@ class ApplePlatformUtils : public QObject {
   Q_OBJECT
 public:
   explicit ApplePlatformUtils(QObject *parent = nullptr);
-  static void init_sparkle();
+  // static void init_sparkle();
 
 #if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
-  void triggerBiometric(const QString &reason = QString());
-  bool isBiometricAvailable();
+  // void triggerBiometric(const QString &reason = QString());
+  // bool isBiometricAvailable();
 #endif
 
 #ifdef Q_OS_IOS
@@ -34,13 +34,15 @@ signals:
 #endif
 
 private:
-#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
-  void
-  authenticateWithBiometric(const QString &reason,
-                            std::function<void(bool, const char *)> callback);
-  void
-  requestPasscodeFallback(std::function<void(bool, const char *)> callback);
-#endif
+  // #if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+  //   void
+  //   authenticateWithBiometric(const QString &reason,
+  //                             std::function<void(bool, const char *)>
+  //                             callback);
+  //   void
+  //   requestPasscodeFallback(std::function<void(bool, const char *)>
+  //   callback);
+  // #endif
 };
 
 #endif // MACOS_UTILS_H
