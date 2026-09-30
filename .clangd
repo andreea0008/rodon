@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-F/opt/homebrew/Caskroom/sparkle/2.7.0]

@@ -7,6 +7,10 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
+#ifdef Q_OS_MACOS
+#include "ios/SparkleUpdater.h"
+#endif
+
 int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
   app.setApplicationVersion(APP_VERSION);
@@ -40,5 +44,9 @@ int main(int argc, char *argv[]) {
                    });
 
   engine.loadFromModule("SVPN", "Main");
+
+#ifdef Q_OS_MACOS
+  SparkleUpdater::instance()->checkForUpdates();
+#endif
   return app.exec();
 }

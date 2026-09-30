@@ -249,12 +249,41 @@ if(APPLE AND NOT IOS)
         MACOSX_BUNDLE_BUNDLE_VERSION       "${PROJECT_VERSION}"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_SHORT}"
         MACOSX_BUNDLE_ICON_FILE            "rodon.icns"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodON-Info.plist.in"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app"
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM   "H8GLL2MY9E"
         XCODE_ATTRIBUTE_CODE_SIGN_STYLE    "Automatic"
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-        "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
+        # Sparkle keys → Xcode INFOPLIST_KEY_*
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_SUFeedURL "http://localhost:8000/appcast.xml"
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_SUPublicEDKey "9xfr5dSRHk0U6dHEwMHSU3Xq/csIEN3IOtenaNDgxf0="
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_SUEnableAutomaticChecks "YES"
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_SUScheduledCheckInterval "3600"
+        XCODE_ATTRIBUTE_INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking "YES"
     )
+
+        # Sparkle — тільки лінкування, вкладається деплой-скриптом
+    set(SPARKLE_DIR "/opt/homebrew/Caskroom/sparkle/2.7.0")
+
+    if(EXISTS "${SPARKLE_DIR}/Sparkle.framework")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "${SPARKLE_DIR}"
+        )
+        target_compile_options(${PROJECT_NAME} PRIVATE "-F${SPARKLE_DIR}")
+        target_link_libraries(${PROJECT_NAME} PRIVATE
+            "-F${SPARKLE_DIR}"
+            "-framework Sparkle"
+        )
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            INSTALL_RPATH "@executable_path/../Frameworks;${_qt_bin_dir}/../lib"
+            BUILD_WITH_INSTALL_RPATH TRUE
+        )
+        target_sources(${PROJECT_NAME} PRIVATE
+            ios/SparkleUpdater.h
+            ios/SparkleUpdater.mm
+        )
+    endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
