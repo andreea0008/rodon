@@ -27,14 +27,17 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
             completionHandler(NSError(domain: "Rodon", code: 1))
             return
         }
-
-        guard let privKeyBase64 = KeychainBridge.loadPrivateKey(),
+        
+        let privKeyBase64 = (conf["privateKey"] as? String) ?? KeychainBridge.loadPrivateKey()
+        guard let privKeyBase64,
               let privateKey = PrivateKey(base64Key: privKeyBase64),
               let serverKey = PublicKey(base64Key: serverPubKey) else {
-            os_log("RodonTunnel: missing or invalid keys")
+            os_log("RodonTunnel: missing or invalid keys (privKey present: %{public}d)",
+                  (conf["privateKey"] as? String) != nil ? 1 : 0)
             completionHandler(NSError(domain: "Rodon", code: 2))
             return
         }
+        
 
         var interface = InterfaceConfiguration(privateKey: privateKey)
         if let addr = IPAddressRange(from: assignedIp) {
@@ -67,6 +70,15 @@ class PacketTunnelProvider: NEPacketTunnelProvider {
     override func stopTunnel(with reason: NEProviderStopReason,
                             completionHandler: @escaping () -> Void) {
         os_log("RodonTunnel: stopTunnel called")
-        adapter.stop { _ in completionHandler() }
+        adapter.stop { error in
+            if let error {
+                os_log("RodonTunnel: adapter stop error: %{public}@",
+                       String(describing: error))
+            }
+            completionHandler()
+            #if os(macOS)
+                exit(0)
+            #endif
+        }
     }
 }

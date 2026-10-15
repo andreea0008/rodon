@@ -9,7 +9,15 @@ import "components"
 import "pages"
 
 import "Utils.js" as Utils
+/**
+  to do:
+  update trs
+  attach sparkle
+  registration in paymant system as stripe
 
+  fix ua location, autoconnect in location page
+  translate next
+*/
 Window {
     id: root
     width: 400
@@ -35,7 +43,7 @@ Window {
         if(registrationState)
             registrationDrawer.open()
     }
-    //UMCX-0KV8-6LKA-9WLZ
+
     Component.onCompleted: {
         console.log("appSettings.code.length: ", appSettings.code.length)
         if(appSettings.code.length !== 0) {
@@ -92,6 +100,14 @@ Window {
         id: registrationDrawer
     }
 
+    Loader {
+        id: sysExtLoader
+        anchors.fill: parent
+        z: 1000
+        active: Qt.platform.os === "osx" || Qt.platform.os === "macos"
+        source: "SysExtApprovalOverlay.qml"
+    }
+
     Settings {
         id: appSettings
         property string code: ""
@@ -99,8 +115,11 @@ Window {
         property bool auto_connection: false
         property string last_selected_code_country
 
-        Component.onCompleted: {
-            console.log("loaded code", code)
+        function reset() {
+            code = ""
+            auto_select_location = false
+            auto_connection = false
+            last_selected_code_country = ""
         }
     }
 

@@ -334,11 +334,11 @@ Item {
                 scale: mainMouse.pressed ? 0.9 : 1.0
 
                 Behavior on scale {
-                    NumberAnimation {
-                        duration: 260
-                        easing.type: Easing.OutBack
-                        easing.overshoot: 3.0
-                    }
+                        NumberAnimation {
+                                duration: 260
+                                easing.type: Easing.OutBack
+                                easing.overshoot: 3.0
+                        }
                 }
 
                 ColumnLayout {
@@ -558,7 +558,7 @@ Item {
                 visible: homePage.status === ConnectionStatus.Connecting
 
                 readonly property bool connecting: homePage.status === ConnectionStatus.Connecting
-                || connected
+                                                   || connected
 
                 Item {
                         id: sphere1Container
@@ -629,7 +629,7 @@ Item {
                         Image {
                                 Layout.preferredHeight: 40
                                 Layout.preferredWidth: 40
-                                source: Utils.flagCountryByCode(connectionController?.currentCode) || ""
+                                source: Utils.flagCountryByCode(connectionController?.currentCode || "")
                                 sourceSize.width: 80
                                 sourceSize.height: 80
                                 smooth: true
@@ -687,6 +687,7 @@ Item {
                                         VText {
                                                 Layout.alignment: Qt.AlignBottom
                                                 Layout.preferredHeight: 20
+                                                Layout.preferredWidth: paintedWidth
                                                 text: `Ping ${connectionController?.currentPing}` || "" //ping
                                                 color: Colors.white
                                                 font.pixelSize: 14
@@ -696,6 +697,7 @@ Item {
                                         VText {
                                                 Layout.alignment: Qt.AlignVCenter
                                                 Layout.preferredHeight: 20
+                                                Layout.fillWidth: true
                                                 verticalAlignment: Text.AlignBottom
                                                 text: `IP: ${connectionController?.currentIp}` || "" // ip
                                                 color: Colors.white
@@ -715,7 +717,16 @@ Item {
                                         Rectangle {
                                                 anchors.centerIn: parent
                                                 width: modelData; height: width
-                                                color: Colors.yellow
+                                                color: {
+                                                        var ping = parseInt(connectionController?.currentPing || "50")
+                                                        if(ping < 50) {
+                                                                return Colors.green
+                                                        } else if(ping >= 50 && ping < 100)
+                                                                return Colors.yellow
+                                                        else {
+                                                                return Colors.red
+                                                        }
+                                                }
                                                 radius: height / 2
                                                 opacity: 0.2
                                         }

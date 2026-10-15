@@ -14,6 +14,9 @@ NSMutableDictionary *baseQuery() {
   q[(__bridge id)kSecAttrService] = kService;
   q[(__bridge id)kSecAttrAccount] = kAccount;
   q[(__bridge id)kSecAttrAccessGroup] = kAccessGroup;
+#if TARGET_OS_OSX
+  q[(__bridge id)kSecUseDataProtectionKeychain] = @YES;
+#endif
   return q;
 }
 }
@@ -29,7 +32,7 @@ bool savePrivateKey(const QString &keyBase64) {
   NSMutableDictionary *q = baseQuery();
   q[(__bridge id)kSecValueData] = data;
   q[(__bridge id)kSecAttrAccessible] =
-      (__bridge id)kSecAttrAccessibleAfterFirstUnlock;
+      (__bridge id)kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly;
 
   OSStatus st = SecItemAdd((__bridge CFDictionaryRef)q, NULL);
   return st == errSecSuccess;

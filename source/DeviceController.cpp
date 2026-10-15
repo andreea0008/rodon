@@ -1,4 +1,5 @@
 #include "devicecontroller.h"
+#include "KeychainStore.h"
 
 DeviceController::DeviceController(NetworkManager *nm, QObject *parent)
     : QAbstractListModel(parent) {
@@ -179,6 +180,9 @@ void DeviceController::heartbeat() {
 
 // ── DELETE /devices/by-device-id/{device_id} ────────────────────────────────
 void DeviceController::removeDevice(const QString &deviceId) {
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+  KeychainStore::clearPrivateKey();
+#endif
   qDebug() << "device_id" << deviceId;
   setLoading(true);
 

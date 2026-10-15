@@ -1,4 +1,6 @@
 #include "AuthController.h"
+#include "KeychainStore.h"
+#include "WgKeys.h"
 
 NetworkManager *AuthController::getNetworkManager() const {
   return networkManager;
@@ -36,6 +38,8 @@ void AuthController::registration(const QString &reserveEmail) {
       QJsonDocument doc = QJsonDocument::fromJson(response);
       qDebug() << doc;
       auto receiveCode = doc.object()["account_code"].toString();
+      WgKeyPair kp = WgKeys::generate();
+      KeychainStore::savePrivateKey(kp.privateKey);
       emit accountCode(receiveCode);
     }
 
@@ -70,6 +74,8 @@ void AuthController::auth(const QString &code) {
       QJsonObject o = doc.object();
       token = o["token"].toString();
       networkManager->setToken(token);
+      WgKeyPair kp = WgKeys::generate();
+      KeychainStore::savePrivateKey(kp.privateKey);
       emit authorized();
     }
 

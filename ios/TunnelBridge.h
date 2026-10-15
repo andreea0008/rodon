@@ -8,8 +8,9 @@ public:
   explicit TunnelBridge(QObject *parent = nullptr);
   ~TunnelBridge();
 
-  void start(const QString &serverPublicKey, const QString &endpoint,
-             const QString &assignedIp, const QString &dns);
+    void start(const QString &serverPublicKey, const QString &endpoint,
+               const QString &assignedIp, const QString &dns,
+               const QString &privateKey = QString());
   void stop();
   void refreshStatus();
 

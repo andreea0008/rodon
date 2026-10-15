@@ -1,6 +1,5 @@
 #import "SparkleUpdater.h"
 #import <Sparkle/Sparkle.h>
-
 SparkleUpdater *SparkleUpdater::instance() {
   static SparkleUpdater s;
   return &s;

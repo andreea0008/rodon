@@ -207,7 +207,7 @@ known only to you.")
             GreenButton {
                 Layout.preferredHeight: 40
                 Layout.fillWidth: true
-                text: registrationDrawer.hasCode ? qsTr("Copy code") : qsTr("Create account")
+                text: registrationDrawer.hasCode ? (copied ? qsTr("Next") : qsTr("Copy code")) : qsTr("Create account")
                 property bool copied: false
                 onClicked: {
                     if(registrationDrawer.hasCode) {
@@ -215,6 +215,7 @@ known only to you.")
                         if(copied) {
                             appSettings.code = codeText.text
                             registrationDrawer.close()
+                            authController.auth(appSettings.code)
                         }
                         vUtils.copyText(codeText.text)
                         copied = true

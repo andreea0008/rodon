@@ -48,6 +48,14 @@ Item {
                 visible: hasMatch()
                 clip: true
 
+                // Component.onCompleted: {
+                //     console.log(appSettings.auto_connection, appSettings.last_selected_code_country,
+                //                 appSettings.last_selected_code_country == countryCode)
+                //     if(appSettings.auto_connection && appSettings.last_selected_code_country == countryCode) {
+                //         locationLV.currentIndex = index
+                //     }
+                // }
+
                 Behavior on height {
                     NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                 }

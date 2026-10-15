@@ -29,13 +29,16 @@ find_package(Qt6 REQUIRED COMPONENTS Quick LinguistTools)
 find_package(unofficial-sodium CONFIG REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
-
 set(IS_PRODUCTION TRUE)
 if(IS_PRODUCTION)
     set(RODON_URL "http://2.28.64.194:3000/api/v1")
+    set(RODON_HARDENED_RUNTIME "YES")
 else()
-    set(RODON_URL "http://localhost:3000/api/v1")
+    set(RODON_URL "http://2.28.64.194:3000/api/v1")
+    set(RODON_HARDENED_RUNTIME "NO")
 endif()
+
+set(RODON_APP_RPATH "@executable_path/../Frameworks ${QT6_INSTALL_PREFIX}/${QT6_INSTALL_LIBS}")
 
 # C++ sources
 file(GLOB_RECURSE CPP_H_FILES
@@ -95,7 +98,10 @@ if(APPLE)
         "${CMAKE_CURRENT_SOURCE_DIR}/ios/*.h"
         "${CMAKE_CURRENT_SOURCE_DIR}/ios/*.mm"
     )
-list(APPEND CPP_H_FILES ${IOS_H_FILES})
+    list(FILTER IOS_H_FILES EXCLUDE REGEX ".*SystemExtensionManager\\.(h|mm)$")
+    list(FILTER IOS_H_FILES EXCLUDE REGEX ".*SystemExtensionBridge\\.(h|mm)$")
+    list(FILTER IOS_H_FILES EXCLUDE REGEX ".*SparkleUpdater\\.(h|mm)$")
+    list(APPEND CPP_H_FILES ${IOS_H_FILES})
 endif()
 
 # translation files
@@ -177,6 +183,8 @@ file(GLOB WGK_C       "${WGK_DIR}/WireGuardKitC/*.c")
 file(GLOB TUNNEL_SWIFT "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/*.swift")
 
 if(IOS)
+    list(FILTER TUNNEL_SWIFT EXCLUDE REGEX ".*/main\\.swift$")
+
     add_executable(RodonTunnel ${TUNNEL_SWIFT} ${WGK_SWIFT})
     target_sources(RodonTunnel PRIVATE ${WGK_C})
     set_source_files_properties(${WGK_C} PROPERTIES LANGUAGE C)
@@ -208,41 +216,51 @@ if(IOS)
         XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY YES)
 
 elseif(APPLE)
+    file(GLOB TUNNEL_SWIFT "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/*.swift")
     add_executable(RodonTunnel ${TUNNEL_SWIFT} ${WGK_SWIFT})
     target_sources(RodonTunnel PRIVATE ${WGK_C})
     set_source_files_properties(${WGK_C} PROPERTIES LANGUAGE C)
 
     set_target_properties(RodonTunnel PROPERTIES
         MACOSX_BUNDLE TRUE
-        XCODE_PRODUCT_TYPE "com.apple.product-type.app-extension"
+        BUNDLE_EXTENSION "systemextension"
+        XCODE_PRODUCT_TYPE "com.apple.product-type.system-extension"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app.tunnel"
-        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info-macos.plist"
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/Info-macos-sysext.plist"
         XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodonTunnel-macos.entitlements"
         XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
-        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "12.0"
+        XCODE_ATTRIBUTE_MACOSX_DEPLOYMENT_TARGET "13.0"
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "H8GLL2MY9E"
-        XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Manual"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Developer ID Application"
+        XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER "RodON Developer ID Tunnel App"
+        XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "${RODON_HARDENED_RUNTIME}"
+        XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "--timestamp"
         XCODE_ATTRIBUTE_MARKETING_VERSION "${PROJECT_VERSION}"
         XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION "${PROJECT_VERSION}"
-        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks"
-        XCODE_ATTRIBUTE_SWIFT_ENABLE_EXPLICIT_MODULES "NO"
+        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "@executable_path/../Frameworks @loader_path/../Frameworks"
         XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/ios/tunnel/RodonTunnel-Bridging-Header.h"
-        XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}\" \"${WGK_DIR}/WireGuardKitC\"")
+        XCODE_ATTRIBUTE_HEADER_SEARCH_PATHS "$(inherited) \"${WGK_DIR}\" \"${WGK_DIR}/WireGuardKitC\""
+        XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
+    )
 
     target_link_libraries(RodonTunnel PRIVATE
         "${WGK_DIR}/libwg-go-macos.a"
         "-framework NetworkExtension" "-framework Foundation")
 
     set_target_properties(${PROJECT_NAME} PROPERTIES
-        XCODE_EMBED_APP_EXTENSIONS RodonTunnel
-        XCODE_EMBED_APP_EXTENSIONS_CODE_SIGN_ON_COPY YES)
+        XCODE_EMBED_SYSTEM_EXTENSIONS RodonTunnel
+        XCODE_EMBED_SYSTEM_EXTENSIONS_CODE_SIGN_ON_COPY YES)
 endif()
 
 if(APPLE AND NOT IOS)
     set(ICNS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon.icns")
     set_source_files_properties("${ICNS_FILE}" PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     target_sources(${PROJECT_NAME} PRIVATE "${ICNS_FILE}")
-
+    target_sources(${PROJECT_NAME} PRIVATE
+        ios/SystemExtensionManager.h
+        ios/SystemExtensionManager.mm
+    )
     set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
         MACOSX_BUNDLE_GUI_IDENTIFIER       "com.rodon.vpn.app"
@@ -252,44 +270,51 @@ if(APPLE AND NOT IOS)
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodON-Info.plist.in"
         XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "com.rodon.vpn.app"
         XCODE_ATTRIBUTE_DEVELOPMENT_TEAM   "H8GLL2MY9E"
-        XCODE_ATTRIBUTE_CODE_SIGN_STYLE    "Automatic"
-        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS
-            "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
-        # Sparkle keys → Xcode INFOPLIST_KEY_*
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE    "Manual"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "Developer ID Application"
+        XCODE_ATTRIBUTE_PROVISIONING_PROFILE_SPECIFIER "RodON Developer ID App"
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_CURRENT_SOURCE_DIR}/ios/rodon-macos-nosandbox.entitlements"
         XCODE_ATTRIBUTE_INFOPLIST_KEY_SUFeedURL "http://localhost:8000/appcast.xml"
         XCODE_ATTRIBUTE_INFOPLIST_KEY_SUPublicEDKey "9xfr5dSRHk0U6dHEwMHSU3Xq/csIEN3IOtenaNDgxf0="
         XCODE_ATTRIBUTE_INFOPLIST_KEY_SUEnableAutomaticChecks "YES"
         XCODE_ATTRIBUTE_INFOPLIST_KEY_SUScheduledCheckInterval "3600"
         XCODE_ATTRIBUTE_INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking "YES"
+        XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME "${RODON_HARDENED_RUNTIME}"
+        XCODE_ATTRIBUTE_OTHER_CODE_SIGN_FLAGS "--timestamp"
+        XCODE_ATTRIBUTE_SWIFT_VERSION "5.0"
+        XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/ios/RodON-Bridging-Header.h"
+        XCODE_ATTRIBUTE_SWIFT_OBJC_INTERFACE_HEADER_NAME "RodON-Swift.h"
+        XCODE_ATTRIBUTE_CLANG_ENABLE_MODULES "YES"
+        XCODE_ATTRIBUTE_DEFINES_MODULE "YES"
     )
 
-        # Sparkle — тільки лінкування, вкладається деплой-скриптом
-    set(SPARKLE_DIR "/opt/homebrew/Caskroom/sparkle/2.7.0")
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        XCODE_ATTRIBUTE_LD_RUNPATH_SEARCH_PATHS "${RODON_APP_RPATH}"
+    )
 
-    if(EXISTS "${SPARKLE_DIR}/Sparkle.framework")
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "${SPARKLE_DIR}"
-        )
-        target_compile_options(${PROJECT_NAME} PRIVATE "-F${SPARKLE_DIR}")
-        target_link_libraries(${PROJECT_NAME} PRIVATE
-            "-F${SPARKLE_DIR}"
-            "-framework Sparkle"
-        )
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            INSTALL_RPATH "@executable_path/../Frameworks;${_qt_bin_dir}/../lib"
-            BUILD_WITH_INSTALL_RPATH TRUE
-        )
-        target_sources(${PROJECT_NAME} PRIVATE
-            ios/SparkleUpdater.h
-            ios/SparkleUpdater.mm
-        )
+    if(IS_PRODUCTION)
+        set(SPARKLE_DIR "/opt/homebrew/Caskroom/sparkle/2.7.0")
+        if(EXISTS "${SPARKLE_DIR}/Sparkle.framework")
+            set_target_properties(${PROJECT_NAME} PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS "${SPARKLE_DIR}")
+            target_compile_options(${PROJECT_NAME} PRIVATE "-F${SPARKLE_DIR}")
+            target_link_libraries(${PROJECT_NAME} PRIVATE "-F${SPARKLE_DIR}" "-framework Sparkle")
+            target_sources(${PROJECT_NAME} PRIVATE
+                ios/SparkleUpdater.h
+                ios/SparkleUpdater.mm
+            )
+            target_compile_definitions(${PROJECT_NAME} PRIVATE RODON_HAS_SPARKLE=1)
+        endif()
+    else()
+        target_compile_definitions(${PROJECT_NAME} PRIVATE RODON_HAS_SPARKLE=0)
     endif()
 endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     APP_VERSION="${PROJECT_VERSION_SHORT}"
 )
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE RODON_URL="${RODON_URL}")
+
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE
         Qt6::Quick unofficial-sodium::sodium
@@ -298,6 +323,12 @@ if(APPLE)
         "-framework Security"
         "-framework LocalAuthentication"
     )
+    if(NOT IOS)
+        target_link_libraries(${PROJECT_NAME} PRIVATE
+            "-framework SystemExtensions"
+            "-framework AppKit"
+        )
+    endif()
 else()
     target_link_libraries(${PROJECT_NAME}
         PRIVATE Qt6::Quick unofficial-sodium::sodium

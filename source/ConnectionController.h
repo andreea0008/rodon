@@ -31,6 +31,8 @@ class ConnectionController : public QObject {
   Q_PROPERTY(QString currentCity READ currentCity NOTIFY currentCityChanged)
   Q_PROPERTY(bool isOnline READ isOnline WRITE setIsOnline NOTIFY
                  isOnlineChanged FINAL)
+  Q_PROPERTY(bool isShowSystemExtention READ isShowSystemExtention WRITE
+                 setIsShowSystemExtention NOTIFY isShowSystemExtentionChanged)
 
 public:
   enum Status {
@@ -60,6 +62,9 @@ public:
   bool isOnline() const;
   void setIsOnline(bool newIsOnline);
 
+  bool isShowSystemExtention() const;
+  void setIsShowSystemExtention(bool newIsShowSystemExtention);
+
 public slots:
   void connectToLocation(const QString &locationId, const QString &deviceId);
   void disconnect(const QString &deviceId);
@@ -77,6 +82,7 @@ signals:
   void currentPingChanged();
   void currentCityChanged();
   void isOnlineChanged();
+  void isShowSystemExtentionChanged();
 
 protected:
   QNetworkRequest makeRequest(const QString &endpoint);
@@ -99,11 +105,13 @@ private:
   QString m_currentIp;
   QString m_currentCountry;
   QString m_currentCode;
-  QString m_currentPing;
+  QString m_currentPing = "20";
   QString m_currentCity;
   bool m_isOnline = false;
 
 #if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   TunnelBridge *m_tunnel;
+  bool m_waitingForSysExt = false;
+  bool m_isShowSystemExtention = false;
 #endif
 };

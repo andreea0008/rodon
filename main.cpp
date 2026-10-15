@@ -6,8 +6,14 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QTimer>
 
 #ifdef Q_OS_MACOS
+#include "SystemExtensionBridge.h"
+#include "ios/SystemExtensionManager.h"
+#endif
+
+#if defined(Q_OS_MACOS) && defined(RODON_HAS_SPARKLE)
 #include "ios/SparkleUpdater.h"
 #endif
 
@@ -43,9 +49,14 @@ int main(int argc, char *argv[]) {
                      }
                    });
 
+#ifdef Q_OS_MACOS
+  qmlRegisterSingletonInstance("RodON", 1, 0, "SysExt",
+                               SystemExtensionManager::instance());
+  SystemExtensionManager::instance()->activate();
+#endif
   engine.loadFromModule("SVPN", "Main");
 
-#ifdef Q_OS_MACOS
+#if defined(Q_OS_MACOS) && defined(RODON_HAS_SPARKLE)
   SparkleUpdater::instance()->checkForUpdates();
 #endif
   return app.exec();

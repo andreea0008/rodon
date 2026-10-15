@@ -70,13 +70,29 @@ Item {
                         color: Colors.white
                     }
 
+                    GlassBox {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 40
+                        radius: 8
+                        boxOpacity: 0.3
+
+                        VText {
+                            anchors.fill: parent
+                            anchors.margins: 10
+                            text: rodon?.isFreeVersion ? qsTr("You are on the Free plan") : qsTr("You are on the Pro plan")
+                            verticalAlignment: Text.AlignVCenter
+                            color: Colors.white
+                            font.pixelSize: 14
+                            weight: 500
+                        }
+                    }
                     Item { Layout.preferredHeight: 20 }
 
                     GreenButton {
                         Layout.preferredHeight: 40
                         Layout.fillWidth: true
                         text: qsTr("Purchase")
-                        visible: !ios
+                        visible: !ios && (rodon?.isFreeVersion || false)
                     }
 
                     Item { Layout.preferredHeight: 20; visible: !ios }
@@ -116,7 +132,7 @@ Item {
                         VText {
                             id: codeText
                             anchors.centerIn: parent
-                            text: "Press here to see code "
+                            text: qsTr("Press here to see code")
                             color: codeBox.hide ? Colors.white : Colors.green
                             font.bold: true
                             weight: 601
@@ -177,7 +193,7 @@ Item {
                                 ScriptAction {
                                     script: {
                                         codeBox.hide = true
-                                        codeText.text = "Press here to see code "
+                                        codeText.text = qsTr("Press here to see code")
                                     }
                                 }
                                 NumberAnimation {
@@ -310,7 +326,7 @@ Item {
 
                         ListElement { lang: "en"; text: qsTr("English") }
                         ListElement { lang: "de"; text: qsTr("Deutsch") }
-                        ListElement { lang: "ua"; text: qsTr("Українська") }
+                        ListElement { lang: "uk"; text: qsTr("Українська") }
                         ListElement { lang: "pl"; text: qsTr("Polski") }
                         ListElement { lang: "fr"; text: qsTr("Français") }
                         ListElement { lang: "es"; text: qsTr("Español") }
@@ -423,7 +439,9 @@ Item {
                         color: Colors.red
                         text: qsTr("Sign Out")
                         onClicked: {
+                            connectionController.disconnect(DeviceInfo.deviceId)
                             deviceController.removeDevice(DeviceInfo.deviceId);
+                            appSettings.reset()
                         }
                     }
                 }

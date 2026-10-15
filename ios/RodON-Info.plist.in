@@ -27,7 +27,7 @@
 
     <!-- Sparkle -->
     <key>SUFeedURL</key>
-    <string>http://localhost:8000/appcast.xml</string>
+    <string>https://2-28-64-194.sslip.io/updates/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>9xfr5dSRHk0U6dHEwMHSU3Xq/csIEN3IOtenaNDgxf0=</string>
     <key>SUEnableAutomaticChecks</key>

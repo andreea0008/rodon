@@ -6,6 +6,10 @@
 #include <QThread>
 #include <QTimer>
 
+#ifdef Q_OS_MACOS
+#include "ios/SystemExtensionManager.h"
+#endif
+
 ConnectionController::ConnectionController(NetworkManager *nm, QObject *parent)
     : QObject(parent) {
   networkManager = nm;
@@ -50,6 +54,26 @@ void ConnectionController::connectToLocation(const QString &locationId,
   if (m_status == Status::Connecting || m_status == Status::Connected)
     return;
 
+#ifdef Q_OS_MACOS
+  auto *sx = SystemExtensionManager::instance();
+  if (!sx->isReady()) {
+    if (!m_waitingForSysExt) {
+      m_waitingForSysExt = true;
+      setIsShowSystemExtention(true);
+      connect(
+          sx, &SystemExtensionManager::ready, this,
+          [this, locationId, deviceId]() {
+            m_waitingForSysExt = false;
+            setIsShowSystemExtention(false);
+            connectToLocation(locationId, deviceId);
+          },
+          Qt::SingleShotConnection);
+    }
+    sx->activate();
+    return;
+  }
+#endif
+
   m_lastError = "";
   emit lastErrorChanged();
   setStatus(Status::Connecting);
@@ -57,19 +81,6 @@ void ConnectionController::connectToLocation(const QString &locationId,
   QJsonObject o;
   o["location_id"] = locationId;
   o["device_id"] = deviceId;
-
-  // QSettings s;
-  // QString privKey = s.value(QStringLiteral("wg/private_key"))
-  //                       .toString(); // з QSettings/Keychain, див. нижче
-  // QString pubKey;
-  // if (privKey.isEmpty()) {
-  //   WgKeyPair kp = WgKeys::generate();
-  //   privKey = kp.privateKey;
-  //   pubKey = kp.publicKey;
-  //   s.setValue(QStringLiteral("wg/private_key"), privKey);
-  // } else {
-  //   pubKey = WgKeys::publicFromPrivate(privKey);
-  // }
 
   QString privKey = KeychainStore::loadPrivateKey();
   QString pubKey;
@@ -83,13 +94,12 @@ void ConnectionController::connectToLocation(const QString &locationId,
   }
 
   o["public_key"] = pubKey;
-  qDebug() << "Send object " << o;
 
   QNetworkReply *reply =
       networkManager->post(makeRequest(QStringLiteral("/connect")),
                            QJsonDocument(o).toJson(QJsonDocument::Compact));
 
-  handleReply(reply, [this](const QJsonDocument &doc) {
+  handleReply(reply, [this, privKey](const QJsonDocument &doc) {
     const QJsonObject o = doc.object();
     m_serverPublicKey = o.value(QStringLiteral("server_public_key")).toString();
     m_serverEndpoint = o.value(QStringLiteral("endpoint")).toString();
@@ -98,11 +108,10 @@ void ConnectionController::connectToLocation(const QString &locationId,
     emit peerConfigChanged();
 
 #if defined(Q_OS_IOS)
-    m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns);
+    m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns,
+                    privKey);
 #elif defined(Q_OS_MACOS)
-    // TODO: реальний macOS-тунель (System Extension) — окремий етап
-    // qDebug() <<
-    m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns);
+    m_tunnel->start(m_serverPublicKey, m_serverEndpoint, m_assignedIp, m_dns, privKey);
     QTimer::singleShot(1500, this, [this] {
         updateIpAndCountry();
         ping();
@@ -298,3 +307,17 @@ void ConnectionController::setIsOnline(bool newIsOnline) {
   m_isOnline = newIsOnline;
   emit isOnlineChanged();
 }
+
+#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+bool ConnectionController::isShowSystemExtention() const {
+  return m_isShowSystemExtention;
+}
+
+void ConnectionController::setIsShowSystemExtention(
+    bool newIsShowSystemExtention) {
+  if (m_isShowSystemExtention == newIsShowSystemExtention)
+    return;
+  m_isShowSystemExtention = newIsShowSystemExtention;
+  emit isShowSystemExtentionChanged();
+}
+#endif

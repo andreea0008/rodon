@@ -14,11 +14,12 @@ TunnelBridge::~TunnelBridge() {
 
 void TunnelBridge::start(const QString &serverPublicKey,
                          const QString &endpoint, const QString &assignedIp,
-                         const QString &dns) {
+                         const QString &dns, const QString &privateKey) {
   NSString *pubKey = serverPublicKey.toNSString();
   NSString *ep = endpoint.toNSString();
   NSString *ip = assignedIp.toNSString();
   NSString *dnsStr = dns.toNSString();
+  NSString *privKey = privateKey.toNSString();
 
   [NETunnelProviderManager loadAllFromPreferencesWithCompletionHandler:^(
                                NSArray<NETunnelProviderManager *> *managers,
@@ -35,20 +36,27 @@ void TunnelBridge::start(const QString &serverPublicKey,
     NETunnelProviderProtocol *proto = [[NETunnelProviderProtocol alloc] init];
     proto.providerBundleIdentifier = @"com.rodon.vpn.app.tunnel";
     proto.serverAddress = ep; // shown in Settings; also passed to extension
-    proto.providerConfiguration = @{
-      @"serverPublicKey" : pubKey,
+    NSMutableDictionary *conf = [@{
       @"endpoint" : ep,
+      @"serverPublicKey" : pubKey,
       @"assignedIp" : ip,
-      @"dns" : dnsStr
-    };
-    // Private key is NOT here — the extension reads it from the shared
-    // Keychain.
+      @"dns" : dnsStr,
+    } mutableCopy];
+#if TARGET_OS_OSX
+    // macOS system extension runs as root and cannot read the user's keychain,
+    // so the private key travels inside providerConfiguration.
+    // On iOS the extension keeps reading it from the shared keychain.
+    if (privKey.length > 0) {
+      conf[@"privateKey"] = privKey;
+    }
+#endif
+    proto.providerConfiguration = conf;
 
     mgr.protocolConfiguration = proto;
     mgr.localizedDescription = @"RodON";
     mgr.enabled = YES;
 
-    [mgr saveToPreferencesWithCompletionHandler:^(NSError *saveErr) {
+    [mgr saveToPreferencesWithCompletionHandler:^(NSError *saveErr) {	
       if (saveErr) {
         emit this->failed(QString::fromNSString(saveErr.localizedDescription));
         return;
