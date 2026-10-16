@@ -348,7 +348,7 @@ ID dispositivo:
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="333"/>
         <source>Italiano</source>
-        <translation>Sei sul piano Pro</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="430"/>

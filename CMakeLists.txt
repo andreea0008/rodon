@@ -314,6 +314,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE RODON_URL="${RODON_URL}")
+target_compile_definitions(${PROJECT_NAME} PRIVATE IS_PRODUCTION=$<IF:$<BOOL:${IS_PRODUCTION}>,true,false>)
 
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE

@@ -3,7 +3,9 @@
 #include "Utils.h"
 #include "source/TranslationManager.h"
 #include <AuthController.h>
+#include <QDir>
 #include <QGuiApplication>
+#include <QLockFile>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QTimer>
@@ -13,23 +15,32 @@
 #include "ios/SystemExtensionManager.h"
 #endif
 
-#if defined(Q_OS_MACOS) && defined(RODON_HAS_SPARKLE)
+#if defined(Q_OS_MACOS) && defined(RODON_HAS_SPARKLE) && defined(IS_PRODUCTION)
 #include "ios/SparkleUpdater.h"
 #endif
 
 int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
   app.setApplicationVersion(APP_VERSION);
+
+#if defined(Q_OS_MACOS) || defined(Q_OS_WIN) || defined(Q_OS_LINUX)
+  QLockFile lock(QDir::temp().absoluteFilePath("com.rodon.vpn.app.lock"));
+  lock.setStaleLockTime(0);
+  if (!lock.tryLock(100))
+    return 0;
+#endif
+
   TranslationManager translationManager(&app);
   QQmlApplicationEngine engine;
   AuthController authController(&engine);
   translationManager.setEngine(&engine);
   RodonController rodon(&authController, &engine);
-  qDebug() << "RODON_URL" << RODON_URL;
   engine.rootContext()->setContextProperty("translationManager",
                                            &translationManager);
   engine.rootContext()->setContextProperty("rodon", &rodon);
   engine.rootContext()->setContextProperty("authController", &authController);
+  engine.rootContext()->setContextProperty("is_production", IS_PRODUCTION);
+  // qDebug() << "RODON_URL" << RODON_URL << IS_PRODUCTION;
 
   QObject::connect(
       &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
@@ -57,7 +68,9 @@ int main(int argc, char *argv[]) {
   engine.loadFromModule("SVPN", "Main");
 
 #if defined(Q_OS_MACOS) && defined(RODON_HAS_SPARKLE)
-  SparkleUpdater::instance()->checkForUpdates();
+  if (RODON_HAS_SPARKLE == 1) {
+    SparkleUpdater::instance()->checkForUpdates();
+  }
 #endif
   return app.exec();
 }

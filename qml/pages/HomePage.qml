@@ -115,12 +115,23 @@ Item {
 
                         if(status === ConnectionStatus.NotConnected) {
                                 timerLeft.leftSec = 0
+
+                                if(appSettings.timestampLastConnect > 0) {
+                                        var cerrentSecs = Math.floor(Date.now() / 1000)
+                                        var result = cerrentSecs - appSettings.timestampLastConnect
+                                        timerLeft.leftSec = result
+                                        console.log("result", result, timerLeft.leftSec)
+                                }
+
                                 connectionController.connectToLocation(
                                                         locationController.currentLocationId,
                                                         DeviceInfo.deviceId)
                         }
 
                         if(status === ConnectionStatus.Connected) {
+                                var sinceSecSinceEpoch = Math.floor(Date.now() / 1000)
+                                console.log("sinceSecSinceEpoch", sinceSecSinceEpoch)
+                                appSettings.timestampLastConnect = sinceSecSinceEpoch
                                 connectionController.disconnect(DeviceInfo.deviceId)
                         }
                 }

@@ -104,7 +104,7 @@ Window {
         id: sysExtLoader
         anchors.fill: parent
         z: 1000
-        active: Qt.platform.os === "osx" || Qt.platform.os === "macos"
+        active: (Qt.platform.os === "osx" || Qt.platform.os === "macos") && is_production
         source: "SysExtApprovalOverlay.qml"
     }
 
@@ -114,6 +114,7 @@ Window {
         property bool auto_select_location: false
         property bool auto_connection: false
         property string last_selected_code_country
+        property int timestampLastConnect
 
         function reset() {
             code = ""

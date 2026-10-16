@@ -349,7 +349,7 @@ ID del dispositivo:
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="333"/>
         <source>Italiano</source>
-        <translation>Estás en el plan Pro</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="430"/>

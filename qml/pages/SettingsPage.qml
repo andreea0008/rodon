@@ -92,6 +92,7 @@ Item {
                         Layout.preferredHeight: 40
                         Layout.fillWidth: true
                         text: qsTr("Purchase")
+                        enabled: false
                         visible: !ios && (rodon?.isFreeVersion || false)
                     }
 
