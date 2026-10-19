@@ -30,11 +30,10 @@ find_package(unofficial-sodium CONFIG REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
 set(IS_PRODUCTION TRUE)
+set(RODON_URL "http://2.28.64.194:3000/api/v1")
 if(IS_PRODUCTION)
-    set(RODON_URL "http://2.28.64.194:3000/api/v1")
     set(RODON_HARDENED_RUNTIME "YES")
 else()
-    set(RODON_URL "http://2.28.64.194:3000/api/v1")
     set(RODON_HARDENED_RUNTIME "NO")
 endif()
 

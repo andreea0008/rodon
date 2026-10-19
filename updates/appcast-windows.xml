@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>RodON for Windows</title>
+    <item>
+      <title>RodON 0.2.1</title>
+      <pubDate>Mon, 19 Oct 2026 12:35:10 +0000</pubDate>
+      <sparkle:version>0.2.1</sparkle:version>
+      <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+      <enclosure url="https://2-28-64-194.sslip.io/updates/RodON-Setup-0.2.1.0.exe"
+                 sparkle:os="windows"
+                 sparkle:installerArguments="/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS"
+                 sparkle:edSignature="/0hjVgt8a7t8QUXKpIwyBGuMwswrBN/v4XOCCA68+GupBNKnazXMgte6vOjBYz2NcnKkWkphsSAISjlEPm8aCQ==" length="45380030"
+                 type="application/octet-stream"/>
+    </item>
+  </channel>
+</rss>

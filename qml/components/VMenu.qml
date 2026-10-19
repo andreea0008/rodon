@@ -75,6 +75,7 @@ GlassBox {
         ColumnLayout {
             anchors.centerIn: parent
             spacing: 4
+
             Image {
                 id: homeIcon
                 Layout.alignment: Qt.AlignHCenter
@@ -121,7 +122,7 @@ GlassBox {
                 text: qsTr("Home")
                 color: root.selected === 1 ? Colors.white : Colors.dim
                 font.pixelSize: 14
-                useShadow: root.selected === PageTypes.Home
+                // useShadow: root.selected === PageTypes.Home
             }
         }
     }
@@ -187,7 +188,7 @@ GlassBox {
                 text: qsTr("Locations")
                 color: root.selected === PageTypes.Locations ? Colors.white : Colors.dim
                 font.pixelSize: 14
-                useShadow: root.selected === PageTypes.Locations
+                // useShadow: root.selected === PageTypes.Locations
             }
         }
     }
@@ -253,7 +254,7 @@ GlassBox {
                 text: qsTr("Settings")
                 color: root.selected === PageTypes.Settings ? Colors.white : Colors.dim
                 font.pixelSize: 14
-                useShadow: root.selected === PageTypes.Settings
+                // useShadow: root.selected === PageTypes.Settings
             }
         }
     }
