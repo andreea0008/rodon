@@ -30,6 +30,25 @@ ConnectionController::ConnectionController(NetworkManager *nm, QObject *parent)
   });
 #endif
 
+#ifdef Q_OS_WIN
+  m_winTunnel = new WinTunnel(this);
+  connect(m_winTunnel, &WinTunnel::stateChanged, this, [this](WinTunnel::State s) {
+      qDebug() << "new state:" << s;
+      switch (s) {
+      case WinTunnel::State::Connecting:    setStatus(Connecting);    break;
+      case WinTunnel::State::Connected:     setStatus(Connected);     break;
+      case WinTunnel::State::Disconnecting: setStatus(Disconnecting); break;
+      case WinTunnel::State::Disconnected:  setStatus(NotConnected);  break;
+      }
+  });
+  connect(m_winTunnel, &WinTunnel::errorOccurred, this, [this](const QString& msg) {
+      qWarning() << "WinTunnel:" << msg;
+      m_lastError = msg;
+      emit lastErrorChanged();
+  });
+  m_winTunnel->refresh();
+#endif
+
   internetCheckTimer = new QTimer(this);
   connect(internetCheckTimer, &QTimer::timeout, this,
           &ConnectionController::checkInternet);
@@ -123,7 +142,13 @@ void ConnectionController::connectToLocation(const QString &locationId,
       QTimer::singleShot(1500, this, [this] { setStatus(Connected); });
 #elif defined(Q_OS_WIN)
       // TODO: Windows WireGuard-тунель
-      QTimer::singleShot(1500, this, [this] { setStatus(Connected); });
+    qDebug() << "loadPrivateKey:" << KeychainStore::loadPrivateKey();
+
+    m_winTunnel->start(o.value("server_public_key").toString(),
+                       o.value("endpoint").toString(),
+                       o.value("allowed_ip").toString(),
+                       o.value("dns").toString(),
+                       KeychainStore::loadPrivateKey());
 #else
       // desktop dev/mock
       QTimer::singleShot(1500, this, [this] { setStatus(Connected); });
@@ -265,6 +290,8 @@ void ConnectionController::checkInternet() {
 void ConnectionController::stopTunnel() {
 #if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   m_tunnel->stop();
+#elif defined(Q_OS_WIN)
+    m_winTunnel->stop();
 #endif
 }
 
@@ -308,16 +335,22 @@ void ConnectionController::setIsOnline(bool newIsOnline) {
   emit isOnlineChanged();
 }
 
-#if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
 bool ConnectionController::isShowSystemExtention() const {
-  return m_isShowSystemExtention;
+#ifdef Q_OS_MACOS
+    return m_isShowSystemExtention;
+#else
+    return false;
+#endif
 }
 
 void ConnectionController::setIsShowSystemExtention(
     bool newIsShowSystemExtention) {
-  if (m_isShowSystemExtention == newIsShowSystemExtention)
-    return;
-  m_isShowSystemExtention = newIsShowSystemExtention;
-  emit isShowSystemExtentionChanged();
-}
+#ifdef Q_OS_MACOS
+    if (m_isShowSystemExtention == newIsShowSystemExtention)
+        return;
+    m_isShowSystemExtention = newIsShowSystemExtention;
+    emit isShowSystemExtentionChanged();
+#else
+    Q_UNUSED(newIsShowSystemExtention);
 #endif
+}

@@ -9,8 +9,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 1)
-set(PROJECT_VERSION_PATCH 0)
+set(PROJECT_VERSION_MINOR 2)
+set(PROJECT_VERSION_PATCH 1)
 set(PROJECT_VERSION_TWEAK 0)
 set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}.${PROJECT_VERSION_TWEAK}")
 set(PROJECT_VERSION_SHORT "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
@@ -25,7 +25,7 @@ if(APPLE)
     endif()
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Quick LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS Quick LinguistTools Network)
 find_package(unofficial-sodium CONFIG REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 
@@ -135,6 +135,48 @@ if(APPLE)
         ios/KeychainStore_apple.mm
     )
 target_link_libraries(${PROJECT_NAME} PRIVATE "-framework Security")
+elseif(WIN32)
+    configure_file(windows/rodon.rc.in ${CMAKE_CURRENT_BINARY_DIR}/rodon.rc @ONLY)
+    target_sources(${PROJECT_NAME} PRIVATE
+        source/KeychainStore.h
+        windows/KeychainStore_win.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/rodon.rc)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Advapi32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+    set(RODON_WG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/windows/third_party/wireguard)
+     add_executable(RodONService windows/service/RodONService.cpp)
+     target_include_directories(RodONService PRIVATE ${RODON_WG_DIR}/include)
+     target_compile_definitions(RodONService PRIVATE
+         UNICODE _UNICODE WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS _WIN32_WINNT=0x0A00)
+     target_link_libraries(RodONService PRIVATE Advapi32)
+     set_property(TARGET RodONService PROPERTY
+         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+     add_custom_command(TARGET RodONService POST_BUILD
+         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+             ${RODON_WG_DIR}/amd64/tunnel.dll
+             ${RODON_WG_DIR}/amd64/wireguard.dll
+             $<TARGET_FILE_DIR:RodONService>)
+     add_dependencies(${PROJECT_NAME} RodONService)
+
+    target_sources(${PROJECT_NAME} PRIVATE windows/WinTunnel.h windows/WinTunnel.cpp)
+    target_include_directories(${PROJECT_NAME} PRIVATE windows)
+
+    set(WINSPARKLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/windows/third_party/winsparkle)
+        set(RODON_SPARKLE_ED_KEY "9xfr5dSRHk0U6dHEwMHSU3Xq/csIEN3IOtenaNDgxf0=")
+
+        if(EXISTS ${WINSPARKLE_DIR}/include/winsparkle.h)
+            target_sources(${PROJECT_NAME} PRIVATE windows/WinUpdater.h windows/WinUpdater.cpp)
+            target_include_directories(${PROJECT_NAME} PRIVATE ${WINSPARKLE_DIR}/include)
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${WINSPARKLE_DIR}/x64/WinSparkle.lib)
+            target_compile_definitions(${PROJECT_NAME} PRIVATE
+                RODON_HAS_WINSPARKLE
+                RODON_SPARKLE_ED_KEY="${RODON_SPARKLE_ED_KEY}")
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    ${WINSPARKLE_DIR}/x64/WinSparkle.dll $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+        else()
+            message(WARNING "WinSparkle not found in ${WINSPARKLE_DIR} - Windows build will have no auto-updates")
+        endif()
 else()
     target_sources(${PROJECT_NAME} PRIVATE
         source/KeychainStore.h
@@ -318,7 +360,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE IS_PRODUCTION=$<IF:$<BOOL:${I
 
 if(APPLE)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-        Qt6::Quick unofficial-sodium::sodium
+        Qt6::Quick unofficial-sodium::sodium Qt6::Network
         "-framework Foundation"
         "-framework NetworkExtension"
         "-framework Security"
@@ -332,7 +374,7 @@ if(APPLE)
     endif()
 else()
     target_link_libraries(${PROJECT_NAME}
-        PRIVATE Qt6::Quick unofficial-sodium::sodium
+        PRIVATE Qt6::Quick unofficial-sodium::sodium Qt6::Network
     )
 endif()
 

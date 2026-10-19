@@ -19,9 +19,16 @@
 #include "ios/SparkleUpdater.h"
 #endif
 
+#ifdef RODON_HAS_WINSPARKLE && defined(IS_PRODUCTION)
+#include "windows/WinUpdater.h"
+#endif
+
 int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
   app.setApplicationVersion(APP_VERSION);
+  app.setOrganizationName("Rodon");
+  app.setOrganizationDomain("rodon.vpn");
+  app.setApplicationName("RodON");
 
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN) || defined(Q_OS_LINUX)
   QLockFile lock(QDir::temp().absoluteFilePath("com.rodon.vpn.app.lock"));
@@ -72,5 +79,11 @@ int main(int argc, char *argv[]) {
     SparkleUpdater::instance()->checkForUpdates();
   }
 #endif
+
+#if defined(Q_OS_WINDOWS) && defined(RODON_HAS_WINSPARKLE)
+  WinUpdater winUpdater;
+  winUpdater.checkForUpdates();
+#endif
+
   return app.exec();
 }

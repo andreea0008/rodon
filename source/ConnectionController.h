@@ -13,6 +13,10 @@
 #include "ios/TunnelBridge.h"
 #endif
 
+#if defined(Q_OS_WIN)
+#include "WinTunnel.h"
+#endif
+
 class ConnectionController : public QObject {
   Q_OBJECT
   QML_ELEMENT
@@ -113,5 +117,9 @@ private:
   TunnelBridge *m_tunnel;
   bool m_waitingForSysExt = false;
   bool m_isShowSystemExtention = false;
+#endif
+
+#if defined(Q_OS_WIN)
+  WinTunnel * m_winTunnel;
 #endif
 };
