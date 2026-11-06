@@ -41,6 +41,7 @@ void TunnelBridge::start(const QString &serverPublicKey,
       @"serverPublicKey" : pubKey,
       @"assignedIp" : ip,
       @"dns" : dnsStr,
+      @"allowSystemStart" : @NO,
     } mutableCopy];
 #if TARGET_OS_OSX
     // macOS system extension runs as root and cannot read the user's keychain,
@@ -56,7 +57,7 @@ void TunnelBridge::start(const QString &serverPublicKey,
     mgr.localizedDescription = @"RodON";
     mgr.enabled = YES;
 
-    [mgr saveToPreferencesWithCompletionHandler:^(NSError *saveErr) {	
+    [mgr saveToPreferencesWithCompletionHandler:^(NSError *saveErr) {
       if (saveErr) {
         emit this->failed(QString::fromNSString(saveErr.localizedDescription));
         return;
@@ -93,7 +94,8 @@ void TunnelBridge::start(const QString &serverPublicKey,
                         }];
 
         NSError *startErr = nil;
-        [mgr.connection startVPNTunnelAndReturnError:&startErr];
+        [mgr.connection startVPNTunnelWithOptions:@{@"source" : @"app"}
+                                   andReturnError:&startErr];
         if (startErr) {
           emit this->failed(
               QString::fromNSString(startErr.localizedDescription));

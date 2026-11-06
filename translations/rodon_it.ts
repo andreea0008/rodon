@@ -348,7 +348,7 @@ ID dispositivo:
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="333"/>
         <source>Italiano</source>
-        <translation type="unfinished"></translation>
+        <translation></translation>
     </message>
     <message>
         <location filename="../qml/pages/SettingsPage.qml" line="430"/>

@@ -13,15 +13,15 @@ var flagMap = ({
     "az": "azerbaijan", "ba": "bosnia and herzegovina", "bb": "barbados",
     "bd": "bangladesh", "be": "belgium", "bf": "burkina faso", "bg": "bulgaria",
     "bh": "bahrain", "bi": "burundi", "bj": "benin", "bm": "bermuda",
-    "bn": "brunei", "bo": "bolivia", "bq": "bonaire", "br": "brazil",
+    "bn": "brunei", "bo": "bolivia", "bq": "bonaire", "pt_br": "brazil", "br": "brazil",
     "bs": "bahamas", "bt": "bhutan", "bw": "botswana", "by": "belarus",
     "bz": "belize", "ca": "canada", "cd": "democratic republic of congo",
     "cf": "central african republic", "cg": "republic of the congo",
     "ch": "switzerland", "ci": "ivory coast", "ck": "cook islands",
     "cl": "chile", "cm": "cameroon", "cn": "china", "co": "colombia",
     "cr": "costa rica", "cu": "cuba", "cv": "cape verde", "cw": "curacao",
-    "cy": "cyprus", "cz": "czech republic", "de": "germany", "dj": "djibouti",
-    "dk": "denmark", "dm": "dominica", "do": "dominican republic",
+    "cy": "cyprus", "cz": "czech republic", "cs": "czech republic", "de": "germany", "dj": "djibouti",
+    "da": "denmark", "dk": "denmark", "dm": "dominica", "do": "dominican republic",
     "dz": "Algeria", "ec": "ecuador", "ee": "estonia", "eg": "egypt",
     "eh": "sahrawi arab democratic republic", "er": "eritrea", "es": "spain",
     "et": "ethiopia", "eu": "european union", "fi": "finland", "fj": "fiji",
@@ -79,6 +79,7 @@ function pngFlag(country) {
 
 function flagCountryByCode(code) {
     if (!code) return ""
+    console.log(code)
     var c = code.toLowerCase()
     // legacy aliases
     if (c === "en" || c === "uk") return pngFlag(c === "en" ? "united kingdom" : "ukraine")

@@ -75,6 +75,8 @@ public slots:
   void checkInternet();
   void stopTunnel();
   void refreshStatus();
+  void removeDevice(const QString &id);
+  void clearPrivateKey();
 
 signals:
   void statusChanged();
@@ -87,6 +89,8 @@ signals:
   void currentCityChanged();
   void isOnlineChanged();
   void isShowSystemExtentionChanged();
+  void logout();
+  void updateDeviceList();
 
 protected:
   QNetworkRequest makeRequest(const QString &endpoint);
@@ -96,6 +100,7 @@ protected:
   void setStatus(Status s);
   void updateIpAndCountry();
   void ping();
+  QString ensurePublicKey();
 
 private:
   NetworkManager *networkManager;
@@ -111,7 +116,10 @@ private:
   QString m_currentCode;
   QString m_currentPing = "20";
   QString m_currentCity;
+  QString m_currentLocation;
+  QString m_currentDeviceId;
   bool m_isOnline = false;
+  bool m_keyRetried = false;
 
 #if defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   TunnelBridge *m_tunnel;
@@ -120,6 +128,6 @@ private:
 #endif
 
 #if defined(Q_OS_WIN)
-  WinTunnel * m_winTunnel;
+  WinTunnel *m_winTunnel;
 #endif
 };

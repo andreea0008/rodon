@@ -11,12 +11,9 @@ import "pages"
 import "Utils.js" as Utils
 /**
   to do:
-  update trs
-  attach sparkle
-  registration in paymant system as stripe
-
-  fix ua location, autoconnect in location page
-  translate next
+  - macos ios vpn connect to vpn via settings
+  - registration in paymant system as stripe
+  - adv for free plan
 */
 Window {
     id: root

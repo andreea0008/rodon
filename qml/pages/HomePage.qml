@@ -93,13 +93,15 @@ Item {
                           && homePage.status !== ConnectionStatus.Disconnecting) || false
                 opacity: connectionController?.isOnline ? 1.0 : 0.7
                 onClicked: {
-                        if(locationController.currentLocationCode === "" && !appSettings.auto_select_location) {
+                        if(locationController.currentLocationCode === "" && !appSettings.auto_select_location
+                                        && !connected) {
                                 selected = PageTypes.Locations
                                 startConnect = true
                                 return;
                         }
 
-                        if(locationController.currentLocationCode === "" && appSettings.auto_select_location) {
+                        if(locationController.currentLocationCode === "" && appSettings.auto_select_location &&
+                                        !connected) {
                                 locationController.randomLocation();
                         }
 

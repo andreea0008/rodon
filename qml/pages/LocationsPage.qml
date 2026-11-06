@@ -64,6 +64,12 @@ Item {
                     NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                 }
 
+                Component.onCompleted: {
+                    if(appSettings.last_selected_code_country === countryCode && connectionController.status === ConnectionStatus.Connected) {
+                        locationLV.currentIndex = index
+                    }
+                }
+
                 function hasMatch() {
                     if (tf.text.length === 0)
                         return true

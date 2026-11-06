@@ -32,9 +32,8 @@ Item {
         anchors.leftMargin: 18
         anchors.rightMargin: 18
         anchors.topMargin: safeTop
-        anchors.bottomMargin: 115
+        anchors.bottomMargin: 110
         contentWidth: availableWidth
-        clip: true
 
         ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
         ScrollBar.vertical.policy: ScrollBar.AlwaysOff
@@ -86,6 +85,7 @@ Item {
                             weight: 500
                         }
                     }
+
                     Item { Layout.preferredHeight: 20 }
 
                     GreenButton {
@@ -297,6 +297,7 @@ Item {
                                         if(DeviceInfo.deviceId === deviceId) {
                                             console.log("Current device. Make question about it and if user agree sigh out")
                                             deviceController.removeDevice(deviceId);
+                                            connectionController.removeDevice(deviceId)
                                         }
                                     }
 
@@ -324,14 +325,6 @@ Item {
 
                     ListModel {
                         id: mL
-
-                        ListElement { lang: "en"; text: qsTr("English") }
-                        ListElement { lang: "de"; text: qsTr("Deutsch") }
-                        ListElement { lang: "uk"; text: qsTr("Українська") }
-                        ListElement { lang: "pl"; text: qsTr("Polski") }
-                        ListElement { lang: "fr"; text: qsTr("Français") }
-                        ListElement { lang: "es"; text: qsTr("Español") }
-                        ListElement { lang: "it"; text: qsTr("Italiano") }
                     }
 
                     ListView {
@@ -342,8 +335,68 @@ Item {
                         clip: true
                         model: mL
                         spacing: 4
+                        property bool shortList: true
+                        readonly property int shortCount: 7
+                        readonly property var allLanguages: [
+                            { lang: "en",    text: "English" },
+                            { lang: "uk",    text: "Українська" },
+                            { lang: "de",    text: "Deutsch" },
+                            { lang: "pl",    text: "Polski" },
+                            { lang: "fr",    text: "Français" },
+                            { lang: "es",    text: "Español" },
+                            { lang: "it",    text: "Italiano" }
+                            // // { lang: "ar",    text: "العربية" },
+                            // { lang: "nl",    text: "Nederlands" },
+                            // { lang: "da",    text: "Dansk" },
+                            // { lang: "tr",    text: "Türkçe" },
+                            // { lang: "cs",    text: "Čeština" },
+                            // { lang: "sk",    text: "Slovenčina" },
+                            // { lang: "sl",    text: "Slovenščina" },
+                            // { lang: "fi",    text: "Finland" },
+                            // // { lang: "fa",    text: "فارسی" },
+                            // { lang: "pt_BR", text: "Português (Brasil)" },
+                            // { lang: "id",    text: "Bahasa Indonesia" },
+                        ]
+
+                        onShortListChanged: {
+                            if (shortList) {
+                                if (mL.count > shortCount)
+                                    mL.remove(shortCount, mL.count - shortCount)
+                            } else {
+                                for (let i = mL.count; i < allLanguages.length; ++i)
+                                    mL.append(allLanguages[i])
+                            }
+                        }
+
                         Component.onCompleted: {
                             currentIndex = findIndexByLang(translationManager.currentLanguage)
+                            for (let i = 0; i < shortCount; ++i)
+                                mL.append(allLanguages[i])
+                        }
+
+                        Behavior on Layout.preferredHeight {
+                            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
+                        }
+
+                        add: Transition {
+                            id: addTr
+                            SequentialAnimation {
+                                PropertyAction { property: "opacity"; value: 0 }
+                                PauseAnimation { duration: (addTr.ViewTransition.index - languageLV.shortCount) * 30 }
+                                ParallelAnimation {
+                                    NumberAnimation { property: "opacity"; to: 1; duration: 200 }
+                                    NumberAnimation {
+                                        property: "y"
+                                        from: addTr.ViewTransition.destination.y - 8
+                                        to: addTr.ViewTransition.destination.y
+                                        duration: 200; easing.type: Easing.OutCubic
+                                    }
+                                }
+                            }
+                        }
+
+                        remove: Transition {
+                            NumberAnimation { property: "opacity"; to: 0; duration: 150 }
                         }
 
                         function findIndexByLang(langCode) {
@@ -421,6 +474,43 @@ Item {
                                 }
                             }
                         }
+
+                        footer: Item {
+                            width: ListView.view.width
+                            height: 44; y: 4
+                            visible: false
+
+                            GlassBox {
+                                y: 4; width: parent.width
+                                height: 40
+                                radius: 8
+                                boxOpacity: 0.3
+                                opacity: moreLessLanguages.pressed ? 0.7 : 1.0
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10
+
+                                    VText {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        leftPadding:  LayoutMirroring.enabled ? 0 : 30
+                                        rightPadding: LayoutMirroring.enabled ? 30 : 0
+                                        text: languageLV.shortList ? qsTr("More languages") : qsTr("Fewer languages")
+                                        color: Colors.white
+                                        font.pixelSize: 14
+                                        weight: 500
+                                    }
+                                }
+                                MouseArea {
+                                    id: moreLessLanguages
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        languageLV.shortList = !languageLV.shortList
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     Item { Layout.preferredHeight: 20}
@@ -448,7 +538,7 @@ Item {
                 }
             }
 
-            Item {Layout.preferredHeight: 20}
+            Item { Layout.preferredHeight: 20 }
 
             VText {
                 Layout.fillWidth: true
@@ -499,7 +589,7 @@ Item {
                 }
             }
 
-            Item {Layout.preferredHeight: 20}
+            Item { Layout.preferredHeight: 20 }
 
             VText {
                 Layout.fillWidth: true
@@ -545,8 +635,23 @@ Item {
                     }
                 }
             }
+
+            Item { Layout.preferredHeight: 115 }
         }
     }
+
+    // Rectangle {
+    //     anchors.bottom: parent.bottom
+    //     width: parent.width
+    //     height: 240
+
+    //     MouseArea { anchors.fill: parent }
+
+    //     gradient: Gradient {
+    //         GradientStop { color: "transparent"; position: 0.0 }
+    //         GradientStop { color: "#80d0d0d"; position: 1.0 }
+    //     }
+    // }
 
     component ToogleSwitch: Item{
         id: tSwitch
@@ -604,9 +709,24 @@ Item {
     Connections {
         target: deviceController
 
-        function onDeviceRemoved(deviceId) {
+        function onDeviceRemoved(deviceId) {cl
             if(DeviceInfo.deviceId === deviceId)
                 sighOut()
+        }
+    }
+
+    Connections {
+        target: connectionController
+
+        function onLogout() {
+            connectionController.disconnect(DeviceInfo.deviceId)
+            connectionController.clearPrivateKey()
+            deviceController.removeDevice(DeviceInfo.deviceId);
+            appSettings.reset()
+        }
+
+        function onUpdateDeviceList() {
+            deviceController.fetchDevices();
         }
     }
 

@@ -9,7 +9,7 @@ const QMap<QString, QString> TranslationManager::m_languageNames = {
     {"ko", "한국어"},      {"es", "Español"},          {"pt", "Português"},
     {"tr", "Türkçe"},      {"ar", "العربية"},          {"vi", "Tiếng Việt"},
     {"th", "ไทย"},         {"id", "Bahasa Indonesia"}, {"cs", "Čeština"},
-    {"sl", "Slovenščina"}, {"it", "Italiano"}};
+    {"sl", "Slovenščina"}, {"it", "Italiano"},         {"fi", "Finland"}};
 
 TranslationManager::TranslationManager(QGuiApplication *app, QObject *parent)
     : QObject(parent), m_app(app), m_translator(new QTranslator(this)),
@@ -222,6 +222,8 @@ QString TranslationManager::getSystemLanguage() const {
     return "en";
   case QLocale::Italian:
     return "it";
+  case QLocale::Finland:
+    return "fi";
   default:
     qDebug() << "No match found, defaulting to English";
     return "en";
